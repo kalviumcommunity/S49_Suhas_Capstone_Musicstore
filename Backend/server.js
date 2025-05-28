@@ -2,28 +2,20 @@ const express = require("express");
 const app = express();
 const PORT = 3000;
 
-app.use(express.json()); // Needed to parse JSON in POST requests
+app.use(express.json()); // Parse JSON request bodies
 
 let instruments = [
-
-// Sample data (replace with database later)
-const instruments = [
     { id: 1, name: "Guitar", type: "String" },
     { id: 2, name: "Drums", type: "Percussion" },
     { id: 3, name: "Piano", type: "Keyboard" }
 ];
 
-
 // GET all instruments
-
-// GET request to fetch all instruments
-
 app.get("/instruments", (req, res) => {
     res.json(instruments);
 });
 
-
-// ✅ POST new instrument
+// POST a new instrument
 app.post("/instruments", (req, res) => {
     const { name, type } = req.body;
     if (!name || !type) {
@@ -39,6 +31,20 @@ app.post("/instruments", (req, res) => {
     res.status(201).json(newInstrument);
 });
 
+// ✅ PUT endpoint to update an instrument by ID
+app.put("/instruments/:id", (req, res) => {
+    const id = parseInt(req.params.id);
+    const { name, type } = req.body;
 
-// Start server
+    const instrument = instruments.find(inst => inst.id === id);
+    if (!instrument) {
+        return res.status(404).json({ message: "Instrument not found." });
+    }
+
+    if (name) instrument.name = name;
+    if (type) instrument.type = type;
+
+    res.json({ message: "Instrument updated successfully", instrument });
+});
+
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
