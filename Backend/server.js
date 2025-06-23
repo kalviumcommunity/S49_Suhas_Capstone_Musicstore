@@ -1,10 +1,11 @@
 const express = require("express");
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json()); // Parse JSON request bodies
 
-let instruments = [
+const 
+instruments = [
     { id: 1, name: "Guitar", type: "String" },
     { id: 2, name: "Drums", type: "Percussion" },
     { id: 3, name: "Piano", type: "Keyboard" }
@@ -31,7 +32,7 @@ app.post("/instruments", (req, res) => {
     res.status(201).json(newInstrument);
 });
 
-// ✅ PUT endpoint to update an instrument by ID
+// PUT endpoint to update an instrument by ID
 app.put("/instruments/:id", (req, res) => {
     const id = parseInt(req.params.id);
     const { name, type } = req.body;
