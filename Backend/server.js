@@ -1,51 +1,102 @@
+// server.js
+
 const express = require("express");
+const dotenv = require("dotenv");
+const connectDB = require('./database/db');
+const Instrument = require('./model/Instrument');
+
+dotenv.config();
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json()); // Parse JSON request bodies
+// Connect to MongoDB
+connectDB();
 
-const 
-instruments = [
-    { id: 1, name: "Guitar", type: "String" },
-    { id: 2, name: "Drums", type: "Percussion" },
-    { id: 3, name: "Piano", type: "Keyboard" }
-];
+// Middleware
+app.use(express.json());
 
-// GET all instruments
-app.get("/instruments", (req, res) => {
+
+app.get("/instruments", async (req, res) => {
+  try {
+    const instruments = await Instrument.find();
     res.json(instruments);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// POST a new instrument
-app.post("/instruments", (req, res) => {
-    const { name, type } = req.body;
-    if (!name || !type) {
-        return res.status(400).json({ message: "Name and type are required." });
-    }
-
-    const newInstrument = {
-        id: instruments.length + 1,
-        name,
-        type
-    };
-    instruments.push(newInstrument);
-    res.status(201).json(newInstrument);
+/**
+ * @route   GET /instruments/:id
+ * @desc    Get a single instrument by ID
+ */
+app.get("/instruments/:id", async (req, res) => {
+  try {
+    const instrument = await Instrument.findById(req.params.id);
+    if (!instrument) return res.status(404).json({ message: "Instrument not found" });
+    res.json(instrument);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// PUT endpoint to update an instrument by ID
-app.put("/instruments/:id", (req, res) => {
-    const id = parseInt(req.params.id);
-    const { name, type } = req.body;
+/**
+ * @route   POST /instruments
+ * @desc    Create a new instrument
+ */
+app.post("/instruments", async (req, res) => {
+  const { name, type } = req.body;
+  if (!name || !type) {
+    return res.status(400).json({ message: "Name and type are required" });
+  }
 
-    const instrument = instruments.find(inst => inst.id === id);
-    if (!instrument) {
-        return res.status(404).json({ message: "Instrument not found." });
-    }
+  try {
+    const newInstrument = new Instrument({ name, type });
+    const savedInstrument = await newInstrument.save();
+    res.status(201).json(savedInstrument);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @route   PUT /instruments/:id
+ * @desc    Update an existing instrument
+ */
+app.put("/instruments/:id", async (req, res) => {
+  const { name, type } = req.body;
+
+  try {
+    const instrument = await Instrument.findById(req.params.id);
+    if (!instrument) return res.status(404).json({ message: "Instrument not found" });
 
     if (name) instrument.name = name;
     if (type) instrument.type = type;
 
-    res.json({ message: "Instrument updated successfully", instrument });
+    const updatedInstrument = await instrument.save();
+    res.json({ message: "Instrument updated", updatedInstrument });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+/**
+ * @route   DELETE /instruments/:id
+ * @desc    Delete an instrument
+ */
+app.delete("/instruments/:id", async (req, res) => {
+  try {
+    const instrument = await Instrument.findById(req.params.id);
+    if (!instrument) return res.status(404).json({ message: "Instrument not found" });
+
+    await instrument.remove();
+    res.json({ message: "Instrument deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
