@@ -1,13 +1,11 @@
-import mongoose from "mongoose";
+// models/Instrument.js
+
+const mongoose = require("mongoose");
 
 const instrumentSchema = new mongoose.Schema({
-  name: String,
-  image: String,
-  brand: String,
-  price: Number,
-  rating: Number,
-  description: String,
+  name: { type: String, required: true },
+  type: { type: String, required: true },
 });
 
 const Instrument = mongoose.model("Instrument", instrumentSchema);
-export default Instrument;
+module.exports = Instrument;
